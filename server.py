@@ -1,10 +1,19 @@
 import socket
+
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+ip = s.getsockname()[0]
+port = 10010
+s.close()
+
+print("IP address of server is " + str(ip) + ":" + str(port))
+
 # Bind the socket to the port
-server_address = ('172.16.16.188', 10010)
-print('starting up on %s port %s' % server_address)
+server_address = (ip, port)
+# print('starting up on %s port %s' % server_address)
 sock.bind(server_address)
 
 # Listen for incoming connections
