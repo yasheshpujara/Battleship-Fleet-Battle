@@ -6,6 +6,8 @@ name = input("Enter your Name: ")
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+ip = input(name + " please Enter ip address of server: ")
+
 # Connect the socket to the port where the server is listening
 server_address = ('10.0.1.11', 10010)
 print('connecting to %s port %s' % server_address)
