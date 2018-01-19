@@ -1,4 +1,8 @@
 import socket
+import sys
+from PyQt5.QtWidgets import (QWidget, QPushButton, QLineEdit,
+                             QInputDialog, QApplication, QLabel)
+from threading import Thread
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -9,37 +13,83 @@ ip = s.getsockname()[0]
 port = 10010
 s.close()
 
+clients, ip_clients, connections = [], [], []
+
 print("IP address of server is " + str(ip) + ":" + str(port))
 
 # Bind the socket to the port
 server_address = (ip, port)
-# print('starting up on %s port %s' % server_address)
 sock.bind(server_address)
 
 # Listen for incoming connections
 sock.listen(1)
 
-while True:
+
+# def select_one(index):
+#     connections[index].sendall("From specific connection".encode("utf-8"))
+
+class Example(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.label1 = QLabel(self)
+        self.label = QLabel(self)
+        self.initUI()
+
+    def initUI(self):
+        # self.label.move(20, 20)
+        self.label.setFixedSize(180, 15)
+        self.label.move(2, 0)
+        self.label1.setFixedSize(180, 15)
+        self.label1.move(2, 18)
+        # self.btn.clicked.connect(self.showDialog)
+
+        # self.le = QLineEdit(self)
+        # self.le.move(130, 22)
+
+        self.setGeometry(400, 400, 290, 150)
+        self.setWindowTitle('Game Room')
+        self.label1.setText("List of Connected Clients:")
+        self.show()
+
+    def setLabel(self, ip, port):
+        self.label.setText("SERVER IP: " + str(ip) + ":" + str(port))
+
+
+def threaded_function(arg):
     # Wait for a connection
     print('waiting for a connection')
     connection, client_address = sock.accept()
-
-    # print(str(client_address) + " Connected!")
+    connections.append(connection)
 
     try:
-        # print >>sys.stderr, 'connection from', client_address
-
+        i = 2
         # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(160)
-            print(str(data) + " Connected!")
+        while i >= 0:
+            data = connection.recv(160).decode('utf-8')
             if data:
-                # print >>sys.stderr, 'sending data back to the client'
-                connection.sendall(str(data) + ", You are connected!")
+                connection.sendall((str(data) + ", You are connected!").encode("utf-8"))
+                clients.append(str(data))
+                # connection.sendall("LOLOLOLOL".encode("utf-8"))
             else:
-                # print >>sys.stderr, 'no more data from', client_address
                 break
+            i-=1
+        ip_clients.append(str(client_address))
 
     finally:
         # Clean up the connection
         connection.close()
+
+    print(ip_clients)
+    print(clients)
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    ex = Example()
+    thread = Thread(target=threaded_function, args=(10,))
+    thread.start()
+    print(ip)
+    ex.setLabel(ip, port)
+    print("thread finished...exiting")
+    sys.exit(app.exec_())

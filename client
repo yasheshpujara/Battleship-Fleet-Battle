@@ -1,34 +1,29 @@
 import socket
-import sys
 
 name = input("Enter your Name: ")
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+port = 10010
 ip = input(name + " please Enter ip address of server: ")
 
 # Connect the socket to the port where the server is listening
-server_address = ('10.0.1.11', 10010)
+server_address = (ip, port)
 print('connecting to %s port %s' % server_address)
 sock.connect(server_address)
+# sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 10000, 3000))
 
 try:
-
     # Send data
-    # message = 'This is the message.  It will be repeated.'
-    # print >>sys.stderr, 'sending "%s"' % message
-    sock.sendall(name)
-
+    sock.send(name.encode("utf-8"))
     # Look for the response
-    amount_received = 0
-    amount_expected = 16
 
-    while amount_received < amount_expected:
-        data = sock.recv(160)
-        amount_received += len(data)
-        print('received "%s"' % data)
+    while True:
+        data = sock.recv(1600).decode('utf-8')
+        print(data)
+        # sock.send("#####".encode('utf-8'))
 
 finally:
-    print('closing socket')
+    # print('closing socket')
     sock.close()
+    pass
