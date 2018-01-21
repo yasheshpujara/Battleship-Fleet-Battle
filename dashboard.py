@@ -14,6 +14,7 @@ class Example(QDialog):
         self.pos = (0, 0)
         self.ship_coordinates = {}
         self.ship_count = 0
+        self.attack_coordinates = []
         self.init_ui()
 
     def init_ui(self):
@@ -37,6 +38,9 @@ class Example(QDialog):
             y1 += 60
             y2 += 60
 
+    def get_coordinates(self):
+        return self.pos[0] - self.pos[0] % 60, self.pos[1] - self.pos[1] % 60
+
     def paintEvent(self, e):
         qp = QPainter()
         qp.begin(self)
@@ -51,7 +55,7 @@ class Example(QDialog):
         x, y = 420, 120
         for c in range(2):
             for _ in range(10):
-                x = 420 if c == 0 else 1120
+                x = 420 if c == 0 else 1140
                 for _ in range(10):
                     qp.drawRect(x, y, 60, 60)
                     x += 60
@@ -62,8 +66,7 @@ class Example(QDialog):
             qp.setBrush(QColor(119, 136, 153))
             pen = QPen(QColor(135, 206, 250), 2, Qt.SolidLine)
             qp.setPen(pen)
-            x = self.pos[0] - self.pos[0] % 60
-            y = self.pos[1] - self.pos[1] % 60
+            x, y = self.get_coordinates()
             ox, oy = x, y
             for _ in range(self.ships[0]):
                 qp.drawRect(x, y, 60, 60)
@@ -108,7 +111,10 @@ class Example(QDialog):
             elif button_pressed == 2:
                 self.ship_align[self.ship_count] = 1
             self.update()
-
+        elif 1120 <= self.pos[0] <= 1720 and 120 <= self.pos[1] <= 720:
+            if button_pressed == 1:
+                self.attack_coordinates.append((self.get_coordinates()))
+                
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
