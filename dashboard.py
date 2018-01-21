@@ -8,7 +8,12 @@ from PyQt5.QtCore import Qt
 class Example(QDialog):
     def __init__(self):
         super().__init__()
-        self.initialize()
+        self.ship_align = [None for _ in range(11)]
+        self.ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+        self.click = False
+        self.pos = (0, 0)
+        self.ship_coordinates = {}
+        self.ship_count = 0
         self.init_ui()
 
     def init_ui(self):
@@ -18,10 +23,6 @@ class Example(QDialog):
         self.setMouseTracking(True)
         self.info_pane()
         self.show()
-
-    def initialize(self):
-        self.ship_align = 0
-        self.ships = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
     def info_pane(self):
         header = QLabel("Battleship Type", self)
@@ -57,28 +58,55 @@ class Example(QDialog):
                 y += 60
             y = 120
 
-    def draw_ships(self, x, y, size):
-        qp1 = QPainter()
-        qp1.begin(self)
-        qp1.setBrush(QColor(255, 80, 0, 160))
-        pen1 = QPen(QColor(135, 206, 250), 2, Qt.SolidLine)
-        qp1.setPen(pen1)
-        x = x - x % 60
-        y = y - y % 60
-        for _ in range(size):
-            qp1.drawRect(x, y, 60, 60)
-            x += 60
-        qp1.end()
+        if self.click:
+            qp.setBrush(QColor(119, 136, 153))
+            pen = QPen(QColor(135, 206, 250), 2, Qt.SolidLine)
+            qp.setPen(pen)
+            x = self.pos[0] - self.pos[0] % 60
+            y = self.pos[1] - self.pos[1] % 60
+            ox, oy = x, y
+            for _ in range(self.ships[0]):
+                qp.drawRect(x, y, 60, 60)
+                if self.ship_align[self.ship_count]:
+                    y += 60
+                else:
+                    x += 60
+            self.click = False
+            if self.ships[0] in self.ship_coordinates.keys():
+                self.ship_coordinates[self.ships[0]].append((ox, oy))
+            else:
+                self.ship_coordinates[self.ships[0]] = [(ox, oy)]
+            self.draw_ships(qp)
+            self.ships.pop(0)
+
+    def draw_ships(self, qp):
+        counter = 0
+        ships_present = list(self.ship_coordinates.keys())[:self.ship_count-1]
+        for value in ships_present:
+            for ship in range(len(self.ship_coordinates[value])):
+                counter += 1
+                x, y = self.ship_coordinates[value][ship][0], self.ship_coordinates[value][ship][1]
+                qp.drawRect(x, y, 60, 60)
+                for _ in range(value):
+                    qp.drawRect(x, y, 60, 60)
+                    if self.ship_align[counter]:
+                        y += 60
+                    else:
+                        x += 60
 
     def mousePressEvent(self, event):
         button_pressed = event.button()
         button_pressed = int(button_pressed)
-        if button_pressed == 1:
-            x = event.x()
-            y = event.y()
-            print(x, y)
-            self.draw_ships(x, y, self.ships[0])
-            self.ships.pop(0)
+        x = event.x()
+        y = event.y()
+        self.click = True
+        self.pos = (x, y)
+        if 420 <= self.pos[0] <= 1020 and 120 <= self.pos[1] <= 720:
+            self.ship_count += 1
+            if button_pressed == 1:
+                self.ship_align[self.ship_count] = 0
+            elif button_pressed == 2:
+                self.ship_align[self.ship_count] = 1
             self.update()
 
 
