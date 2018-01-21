@@ -15,6 +15,8 @@ class Example(QDialog):
         self.ship_coordinates = {}
         self.ship_count = 0
         self.attack_coordinates = []
+        self.attack = False
+        self.attack_count = 0
         self.init_ui()
 
     def init_ui(self):
@@ -24,6 +26,11 @@ class Example(QDialog):
         self.setMouseTracking(True)
         self.info_pane()
         self.show()
+
+    def get_attacks(self):
+        global attack_data
+        attack_data = self.attack_coordinates
+        return attack_data
 
     def info_pane(self):
         header = QLabel("Battleship Type", self)
@@ -81,6 +88,14 @@ class Example(QDialog):
                 self.ship_coordinates[self.ships[0]] = [(ox, oy)]
             self.draw_ships(qp)
             self.ships.pop(0)
+        elif self.attack:
+            self.draw_ships(qp)
+            qp.setBrush(QColor(250, 7, 7))
+            pen = QPen(QColor(135, 206, 250), 2, Qt.SolidLine)
+            qp.setPen(pen)
+
+            self.draw_attacks(qp)
+            self.attack = False
 
     def draw_ships(self, qp):
         counter = 0
@@ -97,26 +112,36 @@ class Example(QDialog):
                     else:
                         x += 60
 
+    def draw_attacks(self, qp):
+        for place in self.attack_coordinates:
+            (p, q) = (place[0], place[1])
+            qp.drawRect(p, q, 60, 60)
+
     def mousePressEvent(self, event):
         button_pressed = event.button()
         button_pressed = int(button_pressed)
         x = event.x()
         y = event.y()
-        self.click = True
         self.pos = (x, y)
-        if 420 <= self.pos[0] <= 1020 and 120 <= self.pos[1] <= 720:
+        if 420 <= self.pos[0] <= 1020 and 120 <= self.pos[1] <= 720 and self.ship_count != 10:
             self.ship_count += 1
+            self.click = True
             if button_pressed == 1:
                 self.ship_align[self.ship_count] = 0
             elif button_pressed == 2:
                 self.ship_align[self.ship_count] = 1
             self.update()
         elif 1120 <= self.pos[0] <= 1720 and 120 <= self.pos[1] <= 720:
+            self.attack = True
             if button_pressed == 1:
+                self.attack_count += 1
                 self.attack_coordinates.append((self.get_coordinates()))
-                
+                self.update()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     ex = Example()
+    attack_data = ex.get_attacks()
+    print(attack_data)
     sys.exit(app.exec_())
