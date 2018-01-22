@@ -17,6 +17,7 @@ class Example(QDialog):
         self.attack_coordinates = []
         self.attack = False
         self.attack_count = 0
+        self.all_coordinates = []
         self.init_ui()
 
     def init_ui(self):
@@ -44,6 +45,25 @@ class Example(QDialog):
             ships_left.setGeometry(120, y1, 140, y2)
             y1 += 60
             y2 += 60
+
+    def populate_ship_coordinates(self):
+        temp = []
+        for key in self.ship_coordinates.keys():
+            for value in self.ship_coordinates[key]:
+                temp.append(value)
+        counter = 3
+        for value in range(len(temp)):
+            self.all_coordinates.append(temp[value])
+            a, b = 60, 60
+            for _ in range(counter):
+                if self.ship_align[value+1]:
+                    self.all_coordinates.append((temp[value][0], temp[value][1]+b))
+                    b += 60
+                else:
+                    self.all_coordinates.append((temp[value][0] + a, temp[value][1]))
+                    a += 60
+            if value == 0 or value == 2 or value == 5:
+                counter -= 1
 
     def get_coordinates(self):
         return self.pos[0] - self.pos[0] % 60, self.pos[1] - self.pos[1] % 60
@@ -123,7 +143,7 @@ class Example(QDialog):
         x = event.x()
         y = event.y()
         self.pos = (x, y)
-        if 420 <= self.pos[0] <= 1020 and 120 <= self.pos[1] <= 720 and self.ship_count != 10:
+        if 420 <= self.pos[0] <= 1020 and 120 <= self.pos[1] <= 720 and self.ship_count < 10:
             self.ship_count += 1
             self.click = True
             if button_pressed == 1:
@@ -131,7 +151,9 @@ class Example(QDialog):
             elif button_pressed == 2:
                 self.ship_align[self.ship_count] = 1
             self.update()
-        elif 1120 <= self.pos[0] <= 1720 and 120 <= self.pos[1] <= 720:
+        elif 1120 <= self.pos[0] <= 1720 and 120 <= self.pos[1] <= 720 and self.ship_count == 10:
+            print(self.ship_coordinates)
+            self.populate_ship_coordinates()
             self.attack = True
             if button_pressed == 1:
                 self.attack_count += 1
