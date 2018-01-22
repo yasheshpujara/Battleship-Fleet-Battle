@@ -1,5 +1,7 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QPushButton, QHBoxLayout, QGroupBox, QVBoxLayout, QGridLayout, QLabel
+import socket
+from threading import Thread
+from PyQt5.QtWidgets import QApplication, QDialog, QLabel
 from PyQt5.QtGui import QPainter, QPen, QColor
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
@@ -15,9 +17,11 @@ class Example(QDialog):
         self.ship_coordinates = {}
         self.ship_count = 0
         self.attack_coordinates = []
-        self.attack = False
+        self.attack = True
         self.attack_count = 0
         self.all_coordinates = []
+        self.hit = False
+        self.opponent_attacked = []
         self.init_ui()
 
     def init_ui(self):
@@ -27,11 +31,6 @@ class Example(QDialog):
         self.setMouseTracking(True)
         self.info_pane()
         self.show()
-
-    def get_attacks(self):
-        global attack_data
-        attack_data = self.attack_coordinates
-        return attack_data
 
     def info_pane(self):
         header = QLabel("Battleship Type", self)
@@ -106,16 +105,20 @@ class Example(QDialog):
                 self.ship_coordinates[self.ships[0]].append((ox, oy))
             else:
                 self.ship_coordinates[self.ships[0]] = [(ox, oy)]
+
             self.draw_ships(qp)
             self.ships.pop(0)
+
         elif self.attack:
             self.draw_ships(qp)
-            qp.setBrush(QColor(250, 7, 7))
-            pen = QPen(QColor(135, 206, 250), 2, Qt.SolidLine)
-            qp.setPen(pen)
-
             self.draw_attacks(qp)
+            self.draw_opponent_attacks(qp)
             self.attack = False
+        elif not self.attack:
+            self.draw_ships(qp)
+            self.draw_attacks(qp)
+            self.draw_opponent_attacks(qp)
+            self.attack = True
 
     def draw_ships(self, qp):
         counter = 0
@@ -133,7 +136,18 @@ class Example(QDialog):
                         x += 60
 
     def draw_attacks(self, qp):
+        qp.setBrush(QColor(250, 7, 7))
+        pen = QPen(QColor(135, 206, 250), 2, Qt.SolidLine)
+        qp.setPen(pen)
         for place in self.attack_coordinates:
+            (p, q) = (place[0], place[1])
+            qp.drawRect(p, q, 60, 60)
+
+    def draw_opponent_attacks(self, qp):
+        qp.setBrush(QColor(236, 142, 142))
+        pen = QPen(QColor(135, 206, 250), 2, Qt.SolidLine)
+        qp.setPen(pen)
+        for place in self.opponent_attacked:
             (p, q) = (place[0], place[1])
             qp.drawRect(p, q, 60, 60)
 
@@ -150,20 +164,56 @@ class Example(QDialog):
                 self.ship_align[self.ship_count] = 0
             elif button_pressed == 2:
                 self.ship_align[self.ship_count] = 1
+            if self.ship_count == 10:
+                print("Y")
+                self.populate_ship_coordinates()
             self.update()
         elif 1120 <= self.pos[0] <= 1720 and 120 <= self.pos[1] <= 720 and self.ship_count == 10:
-            print(self.ship_coordinates)
-            self.populate_ship_coordinates()
-            self.attack = True
+            # self.attack = True
             if button_pressed == 1:
                 self.attack_count += 1
                 self.attack_coordinates.append((self.get_coordinates()))
+                t = Thread(target=threaded_function, args=self.attack_coordinates[self.attack_count - 1])
+                t.start()
                 self.update()
+
+    def update_board(self, data):
+        x, y = data.split()
+        x, y = [int(x)-720, int(y)]
+        if (x, y) in self.all_coordinates:
+            self.opponent_attacked.append((x, y))
+            self.update()
+
+
+def threaded_function(arg, arg1):
+    try:
+        sock.sendall((str(arg) + " " + str(arg1)).encode('utf-8'))
+    except Exception as e:
+        print(e)
+
+
+def receive_function(arg):
+    while True:
+        sock.sendall(name.encode('utf-8'))
+        data = sock.recv(160).decode()
+        arg.update_board(data)
+        # print(data)
 
 
 if __name__ == "__main__":
+    name = input("Enter your Name: ")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    ip = input(name + " please Enter ip address of server: ")
+
+    server_address = (ip, 10010)
+    print('connecting to %s port %s' % server_address)
+    sock.connect(server_address)
+
+    # sock.sendall(name.encode('utf-8'))
+
     app = QApplication(sys.argv)
     ex = Example()
-    attack_data = ex.get_attacks()
-    print(attack_data)
+    t1 = Thread(target=receive_function, args=(ex,))
+    t1.start()
     sys.exit(app.exec_())
