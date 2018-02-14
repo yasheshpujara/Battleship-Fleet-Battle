@@ -8,3 +8,4 @@ class Board:
         self.size = size
         self.x = x
         self.y = y
+
