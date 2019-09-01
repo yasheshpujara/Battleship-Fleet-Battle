@@ -1,0 +1,29 @@
+import socket
+
+name = input("Enter your Name: ")
+
+# Create a TCP/IP socket
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+port = 10010
+ip = input(name + " please Enter ip address of server: ")
+
+# Connect the socket to the port where the server is listening
+server_address = (ip, port)
+print('connecting to %s port %s' % server_address)
+sock.connect(server_address)
+# sock.ioctl(socket.SIO_KEEPALIVE_VALS, (1, 10000, 3000))
+
+try:
+    # Send data
+    sock.send(name.encode("utf-8"))
+    # Look for the response
+
+    while True:
+        data = sock.recv(1600).decode('utf-8')
+        print(data)
+        # sock.send("#####".encode('utf-8'))
+
+finally:
+    # print('closing socket')
+    sock.close()
+    pass
